@@ -47,6 +47,8 @@ def my_floodFill(image, thresh, seedpoint, connection_type=4, rect=None, mask=No
                 seeds.append((tmpX, tmpY))
     return seedMark
 
+# 我的填充
+
 
 class Segment_my(object):
     def __init__(self):
@@ -62,6 +64,7 @@ class Segment_my(object):
         self.seedx, self.seedy = -1, -1  # 种子点坐标
         self.param = [0, 0, 0, 0, 0, 0, 0]
 
+    # 导入图片
     def init_image(self, image_file):
         self.image = cv2.imdecode(np.fromfile(image_file, dtype=np.uint8), 1)
         self.image_raw = self.image.copy()
