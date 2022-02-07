@@ -1,50 +1,60 @@
+<!--
+ * @Author: ArdenZhao
+ * @Date: 2022-01-18 14:09:54
+ * @LastEditors: Do not edit
+ * @LastEditTime: 2022-02-07 15:06:37
+ * @FilePath: /magic_wand/demo/1、useOpenCVJS.html
+-->
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="utf-8">
-<title>Hello OpenCV.js</title>
+  <meta charset="utf-8">
+  <title>Hello OpenCV.js</title>
 </head>
+
 <body>
-<h2>Hello OpenCV.js</h2>
-<p id="status">OpenCV.js is loading...</p>
+  <h2>Hello OpenCV.js</h2>
+  <p id="status">OpenCV.js is loading...</p>
 
-<div>
-  <div class="inputoutput">
-    <img id="imageSrc" alt="No Image" />
-    <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+  <div>
+    <div class="inputoutput">
+      <img id="imageSrc" alt="No Image" />
+      <div class="caption">imageSrc <input type="file" id="fileInput" name="file" /></div>
+    </div>
+    <div class="inputoutput">
+      <canvas id="canvasOutput"></canvas>
+      <div class="caption">canvasOutput</div>
+    </div>
   </div>
-  <div class="inputoutput">
-    <canvas id="canvasOutput" ></canvas>
-    <div class="caption">canvasOutput</div>
-  </div>
-</div>
 
-<script type="text/javascript">
-  //获取图片标签
-  let imgElement = document.getElementById('imageSrc');
-  //获取文件标签
-  let inputElement = document.getElementById('fileInput');
+  <script type="text/javascript">
+    //获取图片标签
+    let imgElement = document.getElementById('imageSrc');
+    //获取文件标签
+    let inputElement = document.getElementById('fileInput');
 
-  //监听有改变的函数
-  inputElement.addEventListener('change', (e) => {
-    console.log('URL',URL)
-    console.log('e.target.files',e.target.files)
-    imgElement.src = URL.createObjectURL(e.target.files[0]);
-  }, false);
+    //监听有改变的函数
+    inputElement.addEventListener('change', (e) => {
+      console.log('URL', URL)
+      console.log('e.target.files', e.target.files)
+      imgElement.src = URL.createObjectURL(e.target.files[0]);
+    }, false);
 
-  imgElement.onload = function() {
-    debugger
-    let mat = cv.imread(imgElement);
-    cv.imshow('canvasOutput', mat);
-    mat.delete(); //防止内存泄漏
-  };
+    imgElement.onload = function () {
+      debugger
+      let mat = cv.imread(imgElement);
+      cv.imshow('canvasOutput', mat);
+      mat.delete(); //防止内存泄漏
+    };
 
-  //异步获取后显示正常
-  function onOpenCvReady() {
-    document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
-  }
-</script>
+    //异步获取后显示正常
+    function onOpenCvReady() {
+      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+    }
+  </script>
 
-<script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+  <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 </body>
+
 </html>
