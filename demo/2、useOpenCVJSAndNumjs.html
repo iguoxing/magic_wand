@@ -2,7 +2,7 @@
  * @Author: ArdenZhao
  * @Date: 2022-01-18 14:09:54
  * @LastEditors: Do not edit
- * @LastEditTime: 2022-02-07 15:49:52
+ * @LastEditTime: 2022-02-07 17:14:41
  * @FilePath: /magic_wand/demo/2、useOpenCVJSAndNumjs.html
 -->
 <!DOCTYPE html>
@@ -42,14 +42,14 @@
     let imgElement = document.getElementById('imageSrc');
     //获取文件标签
     let inputElement = document.getElementById('fileInput');
-    // imgElement.onload = function () {
-    //   let mat = cv.imread(imgElement);
-    //   debugger
-    //   cv.imshow('canvasOutput', mat);
-    //   mat.delete(); //防止内存泄漏
-    // };
     imgElement.src = 'https://speechocean-bj.oss-cn-beijing.aliyuncs.com/ocr_test/test/111.jpeg';
     imgElement.crossOrigin = "Anonymous";
+
+    function init_image(self, image_file) {
+      self.image = cv2.imdecode(np.fromfile(image_file, dtype = np.uint8), 1)
+      self.image_raw = self.image.copy()
+      // self.img_h, self.img_w = self.image.shape[0: 2]  // 原图宽高
+    }
 
 
 
@@ -57,17 +57,11 @@
     function onOpenCvReady() {
       console.log('[ cv ] >', cv)
       document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
-      console.log('imgElement.src', imgElement.src)
-      console.log('imgElement.width', imgElement.width)
-      console.log('imgElement.height', imgElement.height)
       cv['onRuntimeInitialized'] = () => {
-        // do all your work here
         let mat = cv.imread(imgElement);
         cv.imshow('canvasOutput', mat);
         mat.delete(); //防止内存泄漏
-        console.log('[ mat-- ] >', mat)
       };
-      // debugger
     }
     //异步获取后显示正常
     function onNumjsReady() {
@@ -79,6 +73,8 @@
   <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
   <script async src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js" onload="onNumjsReady();"
     type="text/javascript"></script>
+  <!-- 参考链接 -->
+  <!-- https://stackoverflow.com/questions/56671436/cv-mat-is-not-a-constructor-opencv -->
 </body>
 
 </html>

@@ -1,0 +1,141 @@
+<!--
+ * @Author: ArdenZhao
+ * @Date: 2022-01-18 14:09:54
+ * @LastEditors: Do not edit
+ * @LastEditTime: 2022-02-08 18:18:55
+ * @FilePath: /magic_wand/demo/3、myFloodFill.html
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hello OpenCV.js</title>
+  <style>
+    #imageSrc,
+    #canvasOutput {
+      width: 50%;
+      height: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Hello OpenCV.js</h2>
+  <p id="status">OpenCV.js is loading...</p>
+  <div>
+    <div class="inputoutput">
+      <img id="imageSrc" alt="No Image" />
+      <div class="caption">imageSrc</div>
+    </div>
+    <div class="inputoutput">
+      <canvas id="canvasOutput"></canvas>
+      <div class="caption">canvasOutput</div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    //获取图片标签
+    let imgElement = document.getElementById('imageSrc');
+    //获取canvas标签
+    let canvasElement = document.getElementById('canvasOutput');
+    imgElement.src = 'https://speechocean-bj.oss-cn-beijing.aliyuncs.com/ocr_test/test/111.jpeg';
+    imgElement.crossOrigin = "Anonymous";
+
+    function init_image(self, image_file) {
+      self.image = cv2.imdecode(np.fromfile(image_file, dtype = np.uint8), 1)
+      self.image_raw = self.image.copy()
+      // self.img_h, self.img_w = self.image.shape[0: 2]  // 原图宽高
+    }
+    let imageArr = [];
+    // 2、获取图片的宽高
+    let imageWidth = 0
+    let imageHeight = 0
+    imgElement.onload = function () {
+      imageWidth = imgElement.width
+      imageHeight = imgElement.height
+    };
+    //异步获取后显示正常
+    function onOpenCvReady() {
+      console.log('[ cv ] >', cv)
+      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      cv['onRuntimeInitialized'] = () => {
+        // 1、获取图片的数据
+        let mat = cv.imread(imgElement);
+        // console.log('[ mat ] >', mat)
+        // console.log('[ mat.data ] >', JSON.stringify(mat.data))
+        let arr = []
+        // 3、构建图片的二维数组
+        for (let i = 0; i < mat.data.length; i = i + 4) {
+          arr.push(mat.data.slice(i, i + 4));
+        }
+        for (let j = 0; j < arr.length; j = j + imageWidth) {
+          imageArr.push(arr.slice(j, j + imageWidth));
+        }
+        console.log('[ imageArr ] >', imageArr)
+        cv.imshow('canvasOutput', mat);
+        // mat.delete(); //防止内存泄漏
+      };
+    }
+    // todo
+    // 4、获取到Canvas点击的坐标
+    canvasElement.addEventListener('click', (e) => {
+      let clickPoint = getMousePos(canvasElement, e)
+      console.log('clickPoint', clickPoint);
+      let seedMark = myFloodFill(imageArr, 10, clickPoint) // 默认20-30左右，动态输入
+      console.log('seedMark-end', seedMark);
+    }, false);
+
+    function getMousePos(canvas, event) {
+      var rect = canvas.getBoundingClientRect();//方法返回元素的大小及其相对于视口的位置
+      var x = event.clientX - rect.left * (canvas.width / rect.width);
+      var y = event.clientY - rect.top * (canvas.height / rect.height);
+      return [Math.round(x), Math.round(y)];
+    }
+    // 5、改写泛洪方法，获得返回的区域
+    function myFloodFill(image, thresh, seedpoint) {
+      // 构建图片的二维数组
+      let seedMark = new Array(imageHeight).fill(0).map(() => new Array(imageWidth).fill(0));
+      console.log('[ seedMark ] >', seedMark)
+      // 四邻域
+      let p = 4
+      let connection = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+      let seeds = [[seedpoint[1], seedpoint[0]]] //竖直方向在前，水平方向在后
+      let interval = thresh
+      console.log('[ image ] >', image)
+      while (seeds.length > 0) {
+        // 栈顶元素出栈
+        // pt=(y,x),opencv中水平为x坐标，竖直为y坐标，seeds输入坐标为先竖直坐标，后水平坐标
+        let pt = seeds.shift(0)
+        console.log('pt[0] >', pt, pt[0], pt[1])
+        let Ra = image[pt[0]][pt[1]][0]
+        let Ga = image[pt[0]][pt[1]][1]
+        let Ba = image[pt[0]][pt[1]][2]
+        for (let i = 0; i < p; i++) {
+          let x = pt[1] + connection[i][0]
+          let y = pt[0] + connection[i][1]
+          // 检测边界点
+          if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) {
+            continue
+          }
+          let Rb = image[y][x][0]
+          let Gb = image[y][x][1]
+          let Bb = image[y][x][2]
+          // 满足魔法点的条件
+          if (seedMark[y][x] == 0 && ((Ra - Rb) <= interval) && (Ga - Gb) <= interval && (Ba - Bb) <= interval) {
+            // 将魔法点标记为已访问
+            seedMark[y][x] = 1
+            // 将魔法点压入栈
+            seeds.push([y, x])
+          }
+        }
+      }
+      return seedMark
+    }
+    // 6、显示图像的遮层
+  </script>
+
+  <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</body>
+
+</html>

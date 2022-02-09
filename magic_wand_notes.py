@@ -2,8 +2,8 @@
 Author: ArdenZhao
 Date: 2022-01-14 11:22:36
 LastEditors: Do not edit
-LastEditTime: 2022-02-07 14:37:05
-FilePath: /magic_wand/magic_wand copy.py
+LastEditTime: 2022-02-08 15:51:30
+FilePath: /magic_wand/magic_wand_notes.py
 关键代码
 '''
 
@@ -34,7 +34,7 @@ def my_floodFill(image, thresh, seedpoint, connection_type=4, rect=None, mask=No
     interval = 2*lo  # 间隔，
 
     # seeds内无元素时候生长停止
-    while len(seeds) != 0:
+    while len(seeds) != 0:  # Python len() 方法返回对象（字符、列表、元组等）长度或项目个数
         # 栈顶元素出栈
         # pt=(y,x),opencv中水平为x坐标，竖直为y坐标，seeds输入坐标为先竖直坐标，后水平坐标
         pt = seeds.pop(0)
@@ -52,5 +52,5 @@ def my_floodFill(image, thresh, seedpoint, connection_type=4, rect=None, mask=No
             if (seedMark[tmpX, tmpY] == 0) and (Ra-Rb+lo) <= interval and (Ga-Gb+lo) <= interval and (Ba-Bb+lo) <= interval:  # 满足魔法点的条件
                 # if (R_min<R<R_max) and (G_min<G<G_max) and (B_min<B<B_max) and :
                 seedMark[tmpX, tmpY] = 1  # 赋值后，继续检测
-                seeds.append((tmpX, tmpY))
+                seeds.append((tmpX, tmpY))  # append() 方法用于在列表末尾添加新的对象。
     return seedMark
