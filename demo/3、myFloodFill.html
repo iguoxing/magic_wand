@@ -2,7 +2,7 @@
  * @Author: ArdenZhao
  * @Date: 2022-01-18 14:09:54
  * @LastEditors: Do not edit
- * @LastEditTime: 2022-02-08 18:18:55
+ * @LastEditTime: 2022-02-09 12:15:11
  * @FilePath: /magic_wand/demo/3、myFloodFill.html
 -->
 <!DOCTYPE html>
@@ -39,6 +39,9 @@
     let imgElement = document.getElementById('imageSrc');
     //获取canvas标签
     let canvasElement = document.getElementById('canvasOutput');
+    const redColor = [255, 0, 0, 255];// red color
+    // let ctx = canvasElement.getContext('2d');
+    // console.log('[ ctx ] >', ctx)
     imgElement.src = 'https://speechocean-bj.oss-cn-beijing.aliyuncs.com/ocr_test/test/111.jpeg';
     imgElement.crossOrigin = "Anonymous";
 
@@ -70,8 +73,10 @@
           arr.push(mat.data.slice(i, i + 4));
         }
         for (let j = 0; j < arr.length; j = j + imageWidth) {
-          imageArr.push(arr.slice(j, j + imageWidth));
+          let tmp = arr.slice(j, j + imageWidth)
+          imageArr.push(tmp);
         }
+        console.log('[ mat ] >', mat)
         console.log('[ imageArr ] >', imageArr)
         cv.imshow('canvasOutput', mat);
         // mat.delete(); //防止内存泄漏
@@ -82,8 +87,9 @@
     canvasElement.addEventListener('click', (e) => {
       let clickPoint = getMousePos(canvasElement, e)
       console.log('clickPoint', clickPoint);
-      let seedMark = myFloodFill(imageArr, 10, clickPoint) // 默认20-30左右，动态输入
-      console.log('seedMark-end', seedMark);
+      let magicMark = myFloodFill(imageArr, 1, clickPoint) // 默认20-30左右，动态输入
+      showMagicImage(magicMark)
+      console.log('magicMark-end', magicMark);
     }, false);
 
     function getMousePos(canvas, event) {
@@ -107,7 +113,7 @@
         // 栈顶元素出栈
         // pt=(y,x),opencv中水平为x坐标，竖直为y坐标，seeds输入坐标为先竖直坐标，后水平坐标
         let pt = seeds.shift(0)
-        console.log('pt[0] >', pt, pt[0], pt[1])
+        // console.log('pt[0] >', pt, pt[0], pt[1])
         let Ra = image[pt[0]][pt[1]][0]
         let Ga = image[pt[0]][pt[1]][1]
         let Ba = image[pt[0]][pt[1]][2]
@@ -133,9 +139,50 @@
       return seedMark
     }
     // 6、显示图像的遮层
+    function showMagicImage(magicMark) {
+      // 克隆原始图像  存储魔法棒后每个像素点的颜色
+      let imageMagic = cloneImage()
+      console.log('[ imageMagic ] >', imageMagic)
+      // 遍历遮罩层,将1位置的克隆后的数据设置为红色
+      for (let i = 0; i < imageHeight; i++) {
+        for (let j = 0; j < imageWidth; j++) {
+          if (magicMark[i][j] == 1) {
+            imageMagic[i][j][0] = 255
+            imageMagic[i][j][1] = 0
+            imageMagic[i][j][2] = 0
+          }
+        }
+      }
+      // 再次生成图像数据，展示出来
+      let imageMatData = []
+      // let imageMatData = imageMagic.flat(3)
+      for (let i = 0; i < imageMagic.length; i++) {
+        for (let j = 0; j < imageMagic[i].length; j++) {
+          imageMatData.push(imageMagic[i][j][0])
+          imageMatData.push(imageMagic[i][j][1])
+          imageMatData.push(imageMagic[i][j][2])
+          imageMatData.push(255)
+        }
+      }
+      console.log('[ imageMatData ] >', imageMatData)
+      let matMagic = cv.imread(imgElement);
+      matMagic.data = imageMatData;
+      cv.imshow('canvasOutput', matMagic);
+      // todo  处理data Uint8Array(166284)格式问题；第二，处理mat.data 只读的问题
+    }
+
+    function cloneImage() {
+      let re = [];
+      for (let i = 0; i < imageArr.length; i++) {
+        let [...arr1] = imageArr[i];
+        re.push(arr1);
+      }
+      return re
+    }
   </script>
 
-  <script async src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+  <script async src="https://speechocean-bj.oss-cn-beijing.aliyuncs.com/ocr_test/test/js/opencv-4.5.js"
+    onload="onOpenCvReady();" type="text/javascript"></script>
 </body>
 
 </html>
