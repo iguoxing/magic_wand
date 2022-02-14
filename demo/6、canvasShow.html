@@ -1,0 +1,176 @@
+<!--
+ * @Author: ArdenZhao
+ * @Date: 2022-01-18 14:09:54
+ * @LastEditors: Do not edit
+ * @LastEditTime: 2022-02-14 16:42:33
+ * @FilePath: /magic_wand/demo/6、canvasShow.html
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Canvas Image</title>
+</head>
+
+<body>
+  <h2>Canvas Image</h2>
+  <div>
+    <div class="inputoutput">
+      <canvas id="canvasOutput" width="1200" height="600"></canvas>
+      <div class="caption">canvasOutput</div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    //获取canvas标签
+    let canvasElement = document.getElementById('canvasOutput');
+    let ctx = canvasElement.getContext('2d');; //2. 获取2D上下文
+    const redColor = [255, 0, 0, 255];// red color
+    //3. 新建一个Image对象
+    var img = new Image();
+    //4. 设置Image的src
+    img.src = 'https://speechocean-bj.oss-cn-beijing.aliyuncs.com/ocr_test/test/111.jpeg';
+    img.crossOrigin = "Anonymous";
+    //5. 确定Image加载完毕后将Image画到canvas上
+    let imageWidth = 0
+    let imageHeight = 0
+    let imageData = {} // 原始图像数据
+    let imageArr = []; // 图像数据转化为二维数组
+    img.onload = () => {
+      imageWidth = canvasElement.width / 2
+      imageHeight = canvasElement.height / 2
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight);// 将处理的过的数据显示在新的位置
+      imageData = ctx.getImageData(0, 0, imageWidth, imageHeight); //复制到Canvas的像素信息
+      console.log('imageData', imageData);
+      // 3、构建图片的二维数组
+      let arr = []
+      for (let i = 0; i < imageData.data.length; i = i + 4) {
+        arr.push(imageData.data.slice(i, i + 4));
+      }
+      for (let j = 0; j < arr.length; j = j + imageWidth) {
+        let tmp = arr.slice(j, j + imageWidth)
+        imageArr.push(tmp);
+      }
+      console.log('imageArr', imageArr);
+    }
+
+    //异步获取后显示正常
+    function onOpenCvReady() {
+      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      cv['onRuntimeInitialized'] = () => {
+        // 1、获取图片的数据
+        let mat = cv.imread(canvasElement);
+        let arr = []
+
+        console.log('[ mat ] >', mat)
+        // console.log('[ imageArr ] >', imageArr)
+        cv.imshow('canvasOutput', mat);
+        mat.delete(); //防止内存泄漏
+      };
+    }
+    // 4、获取到Canvas点击的坐标
+    canvasElement.addEventListener('click', (e) => {
+      let clickPoint = getMousePos(canvasElement, e)
+      console.log('clickPoint', clickPoint);
+      let magicMark = myFloodFill(imageArr, 5, clickPoint) // 默认20-30左右，动态输入
+      console.log('magicMark-end', magicMark);
+      // 有了像素点，要在新的Canvas中绘制出来
+      let imageMatData = showMagicImage(magicMark)
+      // let clone = JSON.parse(JSON.stringify(imageData))
+      imageData.data = imageMatData
+      let clone = new ImageData(new Uint8ClampedArray(imageMatData), imageWidth, imageHeight)
+      // debugger
+      ctx.putImageData(clone, imageWidth, imageHeight); // 将处理的过的数据显示在原来的位置
+      // newctx.putImageData(imageData, 0, 0); // 将处理的过的数据显示在原来的位置
+    }, false);
+
+    function getMousePos(canvas, event) {
+      var rect = canvas.getBoundingClientRect();//方法返回元素的大小及其相对于视口的位置
+      var x = event.clientX - rect.left * (canvas.width / rect.width);
+      var y = event.clientY - rect.top * (canvas.height / rect.height);
+      return [Math.round(x), Math.round(y)];
+    }
+    // 5、改写泛洪方法，获得返回的区域
+    function myFloodFill(image, thresh, seedpoint) {
+      // 构建图片的二维数组
+      let seedMark = new Array(imageHeight).fill(0).map(() => new Array(imageWidth).fill(0));
+      console.log('[ seedMark ] >', seedMark)
+      // 四邻域
+      let p = 4
+      let connection = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+      let seeds = [[seedpoint[1], seedpoint[0]]] //竖直方向在前，水平方向在后
+      let interval = thresh
+      console.log('[ image ] >', image)
+      while (seeds.length > 0) {
+        // 栈顶元素出栈
+        // pt=(y,x),opencv中水平为x坐标，竖直为y坐标，seeds输入坐标为先竖直坐标，后水平坐标
+        let pt = seeds.shift(0)
+        console.log('pt[0] >', pt, pt[0], pt[1])
+        let Ra = image[pt[0]][pt[1]][0]
+        let Ga = image[pt[0]][pt[1]][1]
+        let Ba = image[pt[0]][pt[1]][2]
+        for (let i = 0; i < p; i++) {
+          let x = pt[1] + connection[i][0]
+          let y = pt[0] + connection[i][1]
+          // 检测边界点
+          if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) {
+            continue
+          }
+          let Rb = image[y][x][0]
+          let Gb = image[y][x][1]
+          let Bb = image[y][x][2]
+          // 满足魔法点的条件
+          if (seedMark[y][x] == 0 && ((Ra - Rb) <= interval) && (Ga - Gb) <= interval && (Ba - Bb) <= interval) {
+            // 将魔法点标记为已访问
+            seedMark[y][x] = 1
+            // 将魔法点压入栈
+            seeds.push([y, x])
+          }
+        }
+      }
+      return seedMark
+    }
+    // 6、显示图像的遮层
+    function showMagicImage(magicMark) {
+      // 克隆原始图像  存储魔法棒后每个像素点的颜色
+      let imageMagic = cloneImage()
+      console.log('[ imageMagic ] >', imageMagic)
+      // 遍历遮罩层,将1位置的克隆后的数据设置为红色
+      for (let i = 0; i < imageHeight; i++) {
+        for (let j = 0; j < imageWidth; j++) {
+          if (magicMark[i][j] == 1) {
+            imageMagic[i][j][0] = 255
+            imageMagic[i][j][1] = 0
+            imageMagic[i][j][2] = 0
+          }
+        }
+      }
+      // 再次生成图像数据，展示出来 Uint8Array(290772)
+      let imageMatData = []
+      // let imageMatData = imageMagic.flat(3)
+      for (let i = 0; i < imageMagic.length; i++) {
+        for (let j = 0; j < imageMagic[i].length; j++) {
+          imageMatData.push(imageMagic[i][j][0])
+          imageMatData.push(imageMagic[i][j][1])
+          imageMatData.push(imageMagic[i][j][2])
+          imageMatData.push(255)
+        }
+      }
+      console.log('[ imageMatData ] >', imageMatData)
+      return imageMatData
+      // return Uint8ClampedArray.from(imageMatData)
+    }
+
+    function cloneImage() {
+      let re = [];
+      for (let i = 0; i < imageArr.length; i++) {
+        let [...arr1] = imageArr[i];
+        re.push(arr1);
+      }
+      return re
+    }
+  </script>
+</body>
+
+</html>
