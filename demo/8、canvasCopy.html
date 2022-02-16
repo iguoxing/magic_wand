@@ -1,0 +1,51 @@
+<!--
+ * @Author: ArdenZhao
+ * @Date: 2022-01-18 14:09:54
+ * @LastEditors: Do not edit
+ * @LastEditTime: 2022-02-16 18:55:42
+ * @FilePath: /magic_wand/demo/8、canvasCopy.html
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Canvas Image</title>
+</head>
+
+<body>
+  <h2>Canvas Image</h2>
+  <div>
+    <div class="inputoutput">
+      <canvas id="canvasOutput" width="1600" height="660"></canvas>
+      <div class="caption">canvasOutput</div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    //获取canvas标签
+    let canvasElement = document.getElementById('canvasOutput');
+    let ctx = canvasElement.getContext('2d');; //2. 获取2D上下文
+    //3. 新建一个Image对象
+    var img = new Image();
+    //4. 设置Image的src
+    img.src = 'https://t7.baidu.com/it/u=2397542458,3133539061&fm=193&f=GIF';
+    img.crossOrigin = "Anonymous";
+    let imageWidth = 0
+    let imageHeight = 0
+    let imageData = {} // 原始图像数据
+    img.onload = () => {
+      imageWidth = canvasElement.width / 2
+      imageHeight = canvasElement.height / 2
+      ctx.drawImage(img, 0, 0, imageWidth, imageHeight);// 将处理的过的数据显示在新的位置
+      imageData = ctx.getImageData(0, 0, imageWidth, imageHeight); //复制到Canvas的像素信息
+    }
+    // 4、获取到Canvas点击的坐标
+    canvasElement.addEventListener('click', (e) => {
+      let clone = new ImageData(new Uint8ClampedArray(imageData.data), imageWidth, imageHeight)
+      ctx.putImageData(clone, 0, imageHeight + 20); // 将处理的过的数据显示在原来的位置
+    }, false);
+  </script>
+</body>
+
+</html>
